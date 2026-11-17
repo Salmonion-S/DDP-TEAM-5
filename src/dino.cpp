@@ -40,23 +40,21 @@ static const char* JUMP_FRAME[] = {
     "   \\   /      "
 };
 
-// Menunduk: kepala turun dekat ground, badan lebih horizontal, ekor dan kaki tetap terlihat.
+// Menunduk (referensi Chrome Dino): kepala turun memanjang ke depan, badan rendah & lebar, ekor terlihat.
 static const char* DUCK_FRAME_1[] = {
-    "   __         ",
-    "  / _)__/\\__  ",
-    "  \\_/  \\_/    "
+    " __/ _)__/\\/\\__ ",
+    "        \\_/ \\   "
 };
 
 static const char* DUCK_FRAME_2[] = {
-    "   __         ",
-    "  / _)__/\\__  ",
-    "   /  \\_/     "
+    " __/ _)__/\\/\\__ ",
+    "         / \\_/  "
 };
 
 static const int STAND_WIDTH = 14;
 static const int STAND_HEIGHT = 6;
-static const int DUCK_WIDTH = 14;
-static const int DUCK_HEIGHT = 3;
+static const int DUCK_WIDTH = 16;
+static const int DUCK_HEIGHT = 2;
 
 static const int JUMP_VELOCITY = -3;
 static const int GRAVITY = 1;
