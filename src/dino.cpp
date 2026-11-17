@@ -154,6 +154,10 @@ bool Dino::isOnGround() const {
     return state != DinoState::JUMPING;
 }
 
+bool Dino::isJumping() const {
+    return state == DinoState::JUMPING;
+}
+
 void Dino::setGroundY(int newGroundY) {
     groundY = newGroundY;
     if (isOnGround()) {
@@ -171,16 +175,19 @@ void Dino::applyJumpPhysics() {
 
     int groundTopY = groundY - (STAND_HEIGHT - 1);
     if (y >= groundTopY) {
+        // Kembali ke ground (fase turun selesai).
         y = groundTopY;
         verticalVelocity = 0;
-        // Kembali ke state sebelum lompat (default RUNNING jika tidak valid).
+
+        // Kembali ke state sebelum lompat agar kontrol engine tetap konsisten.
         DinoState resume = stateBeforeJump;
         state = (resume == DinoState::JUMPING) ? DinoState::RUNNING : resume;
         animTick = 0;
         frameIndex = 0;
-        // Jika resume ducking, sesuaikan posisi agar kaki tetap di ground.
-        if (state == DinoState::DUCKING) {
-            y = groundY - (DUCK_HEIGHT - 1);
+
+        // Jaga posisi ground jika state akhir memiliki tinggi berbeda.
+        if (isOnGround()) {
+            y = groundY - (getHeight() - 1);
         }
     }
 }

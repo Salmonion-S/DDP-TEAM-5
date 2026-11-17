@@ -30,6 +30,9 @@ public:
     // True jika Dino sedang berada di tanah (bukan melompat).
     bool isOnGround() const;
 
+    // True jika Dino sedang melompat.
+    bool isJumping() const;
+
     // Set posisi tanah (koordinat Y kaki Dino saat berdiri/menunduk di tanah).
     void setGroundY(int groundY);
     int getGroundY() const;
