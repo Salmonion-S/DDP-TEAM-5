@@ -1,21 +1,22 @@
 #pragma once
 
-enum class PenguinState {
+enum class DinoState {
     IDLE,
     RUNNING,
     DUCKING,
     JUMPING
 };
 
-class Penguin {
+class Dino {
 public:
-    Penguin();
+    Dino();
 
     void update();
-    void setState(PenguinState stateBaru);
-    PenguinState getState() const;
+    void setState(DinoState state);
+    DinoState getState() const;
 
-    void setPosition(int posX, int posY);
+    void setPosition(int x, int y);
+
     int getX() const;
     int getY() const;
 
@@ -29,7 +30,7 @@ public:
     bool isJumping() const;
 
     // Posisi tanah (koordinat Y kaki saat di tanah).
-    void setGroundY(int tanahY);
+    void setGroundY(int groundY);
     int getGroundY() const;
 
 private:
@@ -40,8 +41,8 @@ private:
     int y;
     int groundY;
 
-    PenguinState state;
-    PenguinState stateBeforeJump;
+    DinoState state;
+    DinoState stateBeforeJump;
 
     int animTick;
     int frameIndex;

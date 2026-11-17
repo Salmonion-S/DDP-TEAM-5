@@ -1,94 +1,99 @@
-#include "penguin.h"
+#include "dino.h"
 
-// Gambar Penguin ASCII sederhana.
-// Kepala dan badan dibuat konsisten, kaki bergerak saat lari.
+// Gambar Dino (T-Rex) sederhana.
+// Kepala, moncong, mata, leher, badan, ekor, dan dua kaki dibuat jelas.
+// Kepala dan badan konsisten, posisi kaki berubah saat berlari.
 
 static const char* IDLE_FRAME[] = {
-    "   .---.  ",
-    "  ( o o ) ",
-    " /|  ^  |\\",
-    "  | '_' | ",
-    "  /_/ \\_\\ "
+    "          __  ",
+    "         / _)_",
+    "        / /   ",
+    "  _/\\/\\/ /    ",
+    " /      /     ",
+    " \\_/ \\_/      "
 };
 
 static const char* RUN_FRAME_1[] = {
-    "   .---.  ",
-    "  ( o o ) ",
-    " /|  ^  |\\",
-    "  | '_' | ",
-    "  /_/ \\   "
+    "          __  ",
+    "         / _)_",
+    "        / /   ",
+    "  _/\\/\\/ /    ",
+    " /      /     ",
+    "  \\_/  \\      "
 };
 
 static const char* RUN_FRAME_2[] = {
-    "   .---.  ",
-    "  ( o o ) ",
-    " /|  ^  |\\",
-    "  | '_' | ",
-    "   / \\_\\  "
+    "          __  ",
+    "         / _)_",
+    "        / /   ",
+    "  _/\\/\\/ /    ",
+    " /      /     ",
+    "   /  \\_/     "
 };
 
 static const char* JUMP_FRAME[] = {
-    "   .---.  ",
-    "  ( o o ) ",
-    " /|  ^  |\\",
-    "  | '_' | ",
-    "   \\   /  "
+    "          __  ",
+    "         / _)_",
+    "        / /   ",
+    "  _/\\/\\/ /    ",
+    " /      /     ",
+    "   \\   /      "
 };
 
-// Menunduk: badan lebih pendek, hitbox ikut lebih kecil.
+// Menunduk: badan lebih rendah tapi kepala/moncong dan kaki tetap terlihat.
 static const char* DUCK_FRAME[] = {
-    "  .---.   ",
-    " ( o o )  ",
-    " <_'^'_>  ",
-    "  /_ _\\   "
+    "              ",
+    "  __          ",
+    " / _)_/\\/\\/\\  ",
+    " \\_____/  \\   "
 };
 
-static const int STAND_WIDTH = 10;
-static const int STAND_HEIGHT = 5;
-static const int DUCK_WIDTH = 10;
+static const int STAND_WIDTH = 14;
+static const int STAND_HEIGHT = 6;
+static const int DUCK_WIDTH = 14;
 static const int DUCK_HEIGHT = 4;
 
 static const int JUMP_VELOCITY = -3;
 static const int GRAVITY = 1;
 static const int ANIM_SPEED = 2;
 
-Penguin::Penguin() {
+Dino::Dino() {
     x = 5;
     y = 0;
     groundY = 0;
-    state = PenguinState::RUNNING;
-    stateBeforeJump = PenguinState::RUNNING;
+    state = DinoState::RUNNING;
+    stateBeforeJump = DinoState::RUNNING;
     animTick = 0;
     frameIndex = 0;
     verticalVelocity = 0;
 }
 
-void Penguin::update() {
-    if (state == PenguinState::JUMPING) {
+void Dino::update() {
+    if (state == DinoState::JUMPING) {
         applyJumpPhysics();
     }
 
     updateAnimationFrame();
 }
 
-void Penguin::setState(PenguinState stateBaru) {
-    if (stateBaru == state) {
+void Dino::setState(DinoState newState) {
+    if (newState == state) {
         return;
     }
 
     // Lompat hanya dari tanah (tidak bisa double jump)
-    if (stateBaru == PenguinState::JUMPING) {
+    if (newState == DinoState::JUMPING) {
         if (!isOnGround()) {
             return;
         }
 
-        if (state == PenguinState::DUCKING) {
-            stateBeforeJump = PenguinState::RUNNING;
+        if (state == DinoState::DUCKING) {
+            stateBeforeJump = DinoState::RUNNING;
         } else {
             stateBeforeJump = state;
         }
 
-        state = PenguinState::JUMPING;
+        state = DinoState::JUMPING;
         verticalVelocity = JUMP_VELOCITY;
         animTick = 0;
         frameIndex = 0;
@@ -96,22 +101,22 @@ void Penguin::setState(PenguinState stateBaru) {
     }
 
     // Saat di udara, perubahan state lain diabaikan dulu
-    if (state == PenguinState::JUMPING) {
+    if (state == DinoState::JUMPING) {
         return;
     }
 
-    PenguinState oldState = state;
-    state = stateBaru;
+    DinoState oldState = state;
+    state = newState;
     animTick = 0;
     frameIndex = 0;
 
     // Jika tinggi berubah (berdiri <-> menunduk), jaga kaki tetap di tanah
     int oldHeight = STAND_HEIGHT;
     int newHeight = STAND_HEIGHT;
-    if (oldState == PenguinState::DUCKING) {
+    if (oldState == DinoState::DUCKING) {
         oldHeight = DUCK_HEIGHT;
     }
-    if (state == PenguinState::DUCKING) {
+    if (state == DinoState::DUCKING) {
         newHeight = DUCK_HEIGHT;
     }
     if (oldHeight != newHeight) {
@@ -119,84 +124,84 @@ void Penguin::setState(PenguinState stateBaru) {
     }
 }
 
-PenguinState Penguin::getState() const {
+DinoState Dino::getState() const {
     return state;
 }
 
-void Penguin::setPosition(int posX, int posY) {
-    x = posX;
-    y = posY;
+void Dino::setPosition(int newX, int newY) {
+    x = newX;
+    y = newY;
 }
 
-int Penguin::getX() const {
+int Dino::getX() const {
     return x;
 }
 
-int Penguin::getY() const {
+int Dino::getY() const {
     return y;
 }
 
-int Penguin::getWidth() const {
-    if (state == PenguinState::DUCKING) {
+int Dino::getWidth() const {
+    if (state == DinoState::DUCKING) {
         return DUCK_WIDTH;
     } else {
         return STAND_WIDTH;
     }
 }
 
-int Penguin::getHeight() const {
-    if (state == PenguinState::DUCKING) {
+int Dino::getHeight() const {
+    if (state == DinoState::DUCKING) {
         return DUCK_HEIGHT;
     } else {
         return STAND_HEIGHT;
     }
 }
 
-const char** Penguin::getCurrentFrame() const {
-    if (state == PenguinState::RUNNING) {
+const char** Dino::getCurrentFrame() const {
+    if (state == DinoState::RUNNING) {
         if (frameIndex == 0) {
             return RUN_FRAME_1;
         } else {
             return RUN_FRAME_2;
         }
-    } else if (state == PenguinState::DUCKING) {
+    } else if (state == DinoState::DUCKING) {
         return DUCK_FRAME;
-    } else if (state == PenguinState::JUMPING) {
+    } else if (state == DinoState::JUMPING) {
         return JUMP_FRAME;
     } else {
         return IDLE_FRAME;
     }
 }
 
-bool Penguin::isOnGround() const {
-    if (state == PenguinState::JUMPING) {
+bool Dino::isOnGround() const {
+    if (state == DinoState::JUMPING) {
         return false;
     } else {
         return true;
     }
 }
 
-bool Penguin::isJumping() const {
-    if (state == PenguinState::JUMPING) {
+bool Dino::isJumping() const {
+    if (state == DinoState::JUMPING) {
         return true;
     } else {
         return false;
     }
 }
 
-void Penguin::setGroundY(int tanahY) {
-    groundY = tanahY;
+void Dino::setGroundY(int newGroundY) {
+    groundY = newGroundY;
 
     if (isOnGround()) {
         y = groundY - (getHeight() - 1);
     }
 }
 
-int Penguin::getGroundY() const {
+int Dino::getGroundY() const {
     return groundY;
 }
 
-void Penguin::applyJumpPhysics() {
+void Dino::applyJumpPhysics() {
     // Fase naik dan turun sederhana
     y = y + verticalVelocity;
     verticalVelocity = verticalVelocity + GRAVITY;
@@ -207,8 +212,8 @@ void Penguin::applyJumpPhysics() {
         verticalVelocity = 0;
 
         state = stateBeforeJump;
-        if (state == PenguinState::JUMPING) {
-            state = PenguinState::RUNNING;
+        if (state == DinoState::JUMPING) {
+            state = DinoState::RUNNING;
         }
 
         animTick = 0;
@@ -219,10 +224,10 @@ void Penguin::applyJumpPhysics() {
     }
 }
 
-void Penguin::updateAnimationFrame() {
+void Dino::updateAnimationFrame() {
     int frameCount = 1;
 
-    if (state == PenguinState::RUNNING) {
+    if (state == DinoState::RUNNING) {
         frameCount = 2;
     } else {
         frameCount = 1;
