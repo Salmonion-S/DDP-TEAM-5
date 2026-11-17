@@ -1,6 +1,10 @@
 #include "environment.h"
 #include <cstdlib>
 
+// Pola tanah berulang (digeser kanan -> kiri)
+static const char GROUND_PATTERN[] = "_.-._.-._.-._.-._.-._.-._.-._.-._.-._.-._.-._.-._";
+static const int GROUND_PATTERN_LEN = 40;
+
 // Awan sederhana (2 baris)
 static const char* CLOUD_FRAME[] = {
     "  _  ",
@@ -29,6 +33,8 @@ Environment::Environment() {
     distanceToNextSpawn = minGap;
     cloud1X = 10;
     cloud2X = 40;
+    groundOffset = 0;
+    cloudTick = 0;
     obstacleCount = 0;
 
     for (int i = 0; i < 8; ++i) {
@@ -37,6 +43,15 @@ Environment::Environment() {
 }
 
 void Environment::update() {
+    // Ground terus bergulir (pola berulang)
+    groundOffset = groundOffset + speed;
+    while (groundOffset >= GROUND_PATTERN_LEN) {
+        groundOffset = groundOffset - GROUND_PATTERN_LEN;
+    }
+    if (groundOffset < 0) {
+        groundOffset = groundOffset + GROUND_PATTERN_LEN;
+    }
+
     moveClouds();
     moveObstacles();
     spawnObstacle();
@@ -50,6 +65,8 @@ void Environment::reset() {
 
     cloud1X = 10;
     cloud2X = 40;
+    groundOffset = 0;
+    cloudTick = 0;
     distanceToNextSpawn = minGap;
 }
 
@@ -104,6 +121,21 @@ int Environment::getCloud2X() const {
     return cloud2X;
 }
 
+int Environment::getGroundOffset() const {
+    return groundOffset;
+}
+
+char Environment::getGroundChar(int column) const {
+    int pos = column + groundOffset;
+    if (pos < 0) {
+        pos = pos + GROUND_PATTERN_LEN;
+    }
+    if (pos >= GROUND_PATTERN_LEN) {
+        pos = pos - GROUND_PATTERN_LEN;
+    }
+    return GROUND_PATTERN[pos];
+}
+
 const char** Environment::getCactusFrame() const {
     return CACTUS_FRAME;
 }
@@ -113,8 +145,9 @@ const char** Environment::getCloudFrame() const {
 }
 
 void Environment::moveClouds() {
-    // Awan bergerak lebih pelan dari obstacle (setengah speed).
-    for (int s = 0; s < speed; ++s) {
+    // Awan bergerak lebih pelan dari obstacle (hanya 1 langkah tiap 2 update).
+    cloudTick = cloudTick + 1;
+    if (cloudTick % 2 == 0) {
         cloud1X = cloud1X - 1;
         if (cloud1X + CLOUD_WIDTH < 0) {
             cloud1X = screenWidth;

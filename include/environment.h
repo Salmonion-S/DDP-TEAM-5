@@ -38,6 +38,10 @@ public:
     int getCloud1X() const;
     int getCloud2X() const;
 
+    // Ground scrolling (pola berulang, bergerak kanan -> kiri).
+    int getGroundOffset() const;
+    char getGroundChar(int column) const;
+
     // Frame ASCII untuk rendering (jumlah baris = height masing-masing).
     const char** getCactusFrame() const;
     const char** getCloudFrame() const;
@@ -46,6 +50,9 @@ private:
     void spawnObstacle();
     void moveClouds();
     void moveObstacles();
+
+    int groundOffset;
+    int cloudTick;
 
     int screenWidth;
     int screenHeight;
