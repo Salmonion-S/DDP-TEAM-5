@@ -3,7 +3,6 @@
 enum class DinoState {
     IDLE,
     RUNNING,
-    DUCKING,
     JUMPING
 };
 
@@ -42,7 +41,6 @@ private:
     int groundY;
 
     DinoState state;
-    DinoState stateBeforeJump;
 
     int animTick;
     int frameIndex;

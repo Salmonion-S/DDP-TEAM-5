@@ -40,21 +40,8 @@ static const char* JUMP_FRAME[] = {
     "   \\   /      "
 };
 
-// Menunduk (referensi Chrome Dino): kepala turun memanjang ke depan, badan rendah & lebar, ekor terlihat.
-static const char* DUCK_FRAME_1[] = {
-    " __/ _)__/\\/\\__ ",
-    "        \\_/ \\   "
-};
-
-static const char* DUCK_FRAME_2[] = {
-    " __/ _)__/\\/\\__ ",
-    "         / \\_/  "
-};
-
 static const int STAND_WIDTH = 14;
 static const int STAND_HEIGHT = 6;
-static const int DUCK_WIDTH = 16;
-static const int DUCK_HEIGHT = 2;
 
 static const int JUMP_VELOCITY = -3;
 static const int GRAVITY = 1;
@@ -65,7 +52,6 @@ Dino::Dino() {
     y = 0;
     groundY = 0;
     state = DinoState::RUNNING;
-    stateBeforeJump = DinoState::RUNNING;
     animTick = 0;
     frameIndex = 0;
     verticalVelocity = 0;
@@ -90,12 +76,6 @@ void Dino::setState(DinoState newState) {
             return;
         }
 
-        if (state == DinoState::DUCKING) {
-            stateBeforeJump = DinoState::RUNNING;
-        } else {
-            stateBeforeJump = state;
-        }
-
         state = DinoState::JUMPING;
         verticalVelocity = JUMP_VELOCITY;
         animTick = 0;
@@ -108,23 +88,9 @@ void Dino::setState(DinoState newState) {
         return;
     }
 
-    DinoState oldState = state;
     state = newState;
     animTick = 0;
     frameIndex = 0;
-
-    // Jika tinggi berubah (berdiri <-> menunduk), jaga kaki tetap di tanah
-    int oldHeight = STAND_HEIGHT;
-    int newHeight = STAND_HEIGHT;
-    if (oldState == DinoState::DUCKING) {
-        oldHeight = DUCK_HEIGHT;
-    }
-    if (state == DinoState::DUCKING) {
-        newHeight = DUCK_HEIGHT;
-    }
-    if (oldHeight != newHeight) {
-        y = groundY - (newHeight - 1);
-    }
 }
 
 DinoState Dino::getState() const {
@@ -145,19 +111,11 @@ int Dino::getY() const {
 }
 
 int Dino::getWidth() const {
-    if (state == DinoState::DUCKING) {
-        return DUCK_WIDTH;
-    } else {
-        return STAND_WIDTH;
-    }
+    return STAND_WIDTH;
 }
 
 int Dino::getHeight() const {
-    if (state == DinoState::DUCKING) {
-        return DUCK_HEIGHT;
-    } else {
-        return STAND_HEIGHT;
-    }
+    return STAND_HEIGHT;
 }
 
 const char** Dino::getCurrentFrame() const {
@@ -166,12 +124,6 @@ const char** Dino::getCurrentFrame() const {
             return RUN_FRAME_1;
         } else {
             return RUN_FRAME_2;
-        }
-    } else if (state == DinoState::DUCKING) {
-        if (frameIndex == 0) {
-            return DUCK_FRAME_1;
-        } else {
-            return DUCK_FRAME_2;
         }
     } else if (state == DinoState::JUMPING) {
         return JUMP_FRAME;
@@ -218,11 +170,8 @@ void Dino::applyJumpPhysics() {
         y = groundTopY;
         verticalVelocity = 0;
 
-        state = stateBeforeJump;
-        if (state == DinoState::JUMPING) {
-            state = DinoState::RUNNING;
-        }
-
+        // Setelah mendarat, Dino otomatis kembali RUNNING
+        state = DinoState::RUNNING;
         animTick = 0;
         frameIndex = 0;
 
@@ -235,8 +184,6 @@ void Dino::updateAnimationFrame() {
     int frameCount = 1;
 
     if (state == DinoState::RUNNING) {
-        frameCount = 2;
-    } else if (state == DinoState::DUCKING) {
         frameCount = 2;
     } else {
         frameCount = 1;
