@@ -1,65 +1,69 @@
 #include "dino.h"
 
-// ASCII art frames.
-// Standing frames: 4 baris, lebar konsisten (dipadding spasi).
+// Gambar ASCII Dino.
+// Kepala dan badan dibuat sama, yang berubah adalah posisi kaki.
+
 static const char* IDLE_FRAME[] = {
     "          __ ",
     "         / _)",
     "  .-^^^-/ /  ",
-    " /       /   "
+    " /    _/     "
 };
 
 static const char* RUN_FRAME_1[] = {
     "          __ ",
     "         / _)",
     "  .-^^^-/ /  ",
-    " /  /  _/    "
+    " /   / \\_    "
 };
 
 static const char* RUN_FRAME_2[] = {
     "          __ ",
     "         / _)",
     "  .-^^^-/ /  ",
-    " /  \\_ /     "
+    " /  _/ \\     "
 };
 
 static const char* JUMP_FRAME[] = {
     "          __ ",
     "         / _)",
     "  .-^^^-/ /  ",
-    " /   \\__/    "
+    " /    \\/     "
 };
 
-// Ducking frames: 2 baris, lebar konsisten.
+// Dino menunduk (lebih pendek) dan kaki tetap berganti.
 static const char* DUCK_FRAME_1[] = {
     "  .-^^^^-.__ ",
-    " /  _  _   / "
+    " /  _  / \\_  "
 };
 
 static const char* DUCK_FRAME_2[] = {
     "  .-^^^^-.__ ",
-    " /  _  _  \\_ "
+    " /  _ _/ \\   "
 };
 
-static constexpr int STAND_WIDTH = 13;
-static constexpr int STAND_HEIGHT = 4;
-static constexpr int DUCK_WIDTH = 13;
-static constexpr int DUCK_HEIGHT = 2;
+static const int STAND_WIDTH = 13;
+static const int STAND_HEIGHT = 4;
+static const int DUCK_WIDTH = 13;
+static const int DUCK_HEIGHT = 2;
 
-Dino::Dino()
-    : x(5),
-      y(0),
-      groundY(0),
-      state(DinoState::RUNNING),
-      stateBeforeJump(DinoState::RUNNING),
-      animTick(0),
-      frameIndex(0),
-      verticalVelocity(0) {}
+Dino::Dino() {
+    x = 5;
+    y = 0;
+    groundY = 0;
+    state = DinoState::RUNNING;
+    stateBeforeJump = DinoState::RUNNING;
+    animTick = 0;
+    frameIndex = 0;
+    verticalVelocity = 0;
+}
 
 void Dino::update() {
+    // Kalau sedang lompat, gerakkan posisi Y dulu
     if (state == DinoState::JUMPING) {
         applyJumpPhysics();
     }
+
     updateAnimationFrame();
 }
 
@@ -68,12 +72,18 @@ void Dino::setState(DinoState newState) {
         return;
     }
 
-    // Mulai lompat hanya jika sedang di tanah.
+    // Mulai lompat hanya jika di tanah (tidak bisa double jump)
     if (newState == DinoState::JUMPING) {
         if (!isOnGround()) {
-            return; // tidak ada double jump
+            return;
         }
-        stateBeforeJump = (state == DinoState::DUCKING) ? DinoState::RUNNING : state;
+
+        if (state == DinoState::DUCKING) {
+            stateBeforeJump = DinoState::RUNNING;
+        } else {
+            stateBeforeJump = state;
+        }
+
         state = DinoState::JUMPING;
         verticalVelocity = JUMP_INITIAL_VELOCITY;
         animTick = 0;
@@ -81,7 +91,7 @@ void Dino::setState(DinoState newState) {
         return;
     }
 
-    // Abaikan perubahan state lain saat di udara; state akhir ditentukan saat mendarat.
+    // Saat lompat, state lain diabaikan dulu
     if (state == DinoState::JUMPING) {
         return;
     }
@@ -91,9 +101,15 @@ void Dino::setState(DinoState newState) {
     animTick = 0;
     frameIndex = 0;
 
-    // Sesuaikan posisi Y agar kaki tetap di ground saat tinggi karakter berubah.
-    int oldHeight = (oldState == DinoState::DUCKING) ? DUCK_HEIGHT : STAND_HEIGHT;
-    int newHeight = (state == DinoState::DUCKING) ? DUCK_HEIGHT : STAND_HEIGHT;
+    // Kalau tinggi badan berubah (misal berdiri ke nunduk), sesuaikan Y supaya kaki tetap di tanah
+    int oldHeight = STAND_HEIGHT;
+    int newHeight = STAND_HEIGHT;
+    if (oldState == DinoState::DUCKING) {
+        oldHeight = DUCK_HEIGHT;
+    }
+    if (state == DinoState::DUCKING) {
+        newHeight = DUCK_HEIGHT;
+    }
     if (oldHeight != newHeight) {
         y = groundY - (newHeight - 1);
     }
@@ -117,49 +133,61 @@ int Dino::getY() const {
 }
 
 int Dino::getWidth() const {
-    return (state == DinoState::DUCKING) ? DUCK_WIDTH : STAND_WIDTH;
+    if (state == DinoState::DUCKING) {
+        return DUCK_WIDTH;
+    } else {
+        return STAND_WIDTH;
+    }
 }
 
 int Dino::getHeight() const {
-    return (state == DinoState::DUCKING) ? DUCK_HEIGHT : STAND_HEIGHT;
+    if (state == DinoState::DUCKING) {
+        return DUCK_HEIGHT;
+    } else {
+        return STAND_HEIGHT;
+    }
 }
 
 const char** Dino::getCurrentFrame() const {
-    int count = 0;
-    int h = 0;
-    int w = 0;
-    const char** frames = getFramesForState(state, count, h, w);
-    if (count <= 0) {
+    if (state == DinoState::RUNNING) {
+        if (frameIndex == 0) {
+            return RUN_FRAME_1;
+        } else {
+            return RUN_FRAME_2;
+        }
+    } else if (state == DinoState::DUCKING) {
+        if (frameIndex == 0) {
+            return DUCK_FRAME_1;
+        } else {
+            return DUCK_FRAME_2;
+        }
+    } else if (state == DinoState::JUMPING) {
+        return JUMP_FRAME;
+    } else { // IDLE
         return IDLE_FRAME;
-    }
-    if (frameIndex < 0 || frameIndex >= count) {
-        return frames;
-    }
-    // getFramesForState mengembalikan pointer ke "set" frame; untuk multi-frame
-    // kita hitung offset manual berdasarkan state.
-    switch (state) {
-        case DinoState::RUNNING:
-            return (frameIndex == 0) ? RUN_FRAME_1 : RUN_FRAME_2;
-        case DinoState::DUCKING:
-            return (frameIndex == 0) ? DUCK_FRAME_1 : DUCK_FRAME_2;
-        case DinoState::JUMPING:
-            return JUMP_FRAME;
-        case DinoState::IDLE:
-        default:
-            return IDLE_FRAME;
     }
 }
 
 bool Dino::isOnGround() const {
-    return state != DinoState::JUMPING;
+    if (state == DinoState::JUMPING) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool Dino::isJumping() const {
-    return state == DinoState::JUMPING;
+    if (state == DinoState::JUMPING) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void Dino::setGroundY(int newGroundY) {
     groundY = newGroundY;
+
+    // Saat di tanah, posisikan Y berdasarkan tinggi karakter sekarang
     if (isOnGround()) {
         y = groundY - (getHeight() - 1);
     }
@@ -170,42 +198,39 @@ int Dino::getGroundY() const {
 }
 
 void Dino::applyJumpPhysics() {
-    y += verticalVelocity;
-    verticalVelocity += GRAVITY;
+    // Naik/turun sederhana: velocity berubah tiap update
+    y = y + verticalVelocity;
+    verticalVelocity = verticalVelocity + GRAVITY;
 
     int groundTopY = groundY - (STAND_HEIGHT - 1);
+
     if (y >= groundTopY) {
-        // Kembali ke ground (fase turun selesai).
+        // Sudah sampai tanah
         y = groundTopY;
         verticalVelocity = 0;
 
-        // Kembali ke state sebelum lompat agar kontrol engine tetap konsisten.
-        DinoState resume = stateBeforeJump;
-        state = (resume == DinoState::JUMPING) ? DinoState::RUNNING : resume;
+        state = stateBeforeJump;
+        if (state == DinoState::JUMPING) {
+            state = DinoState::RUNNING;
+        }
+
         animTick = 0;
         frameIndex = 0;
 
-        // Jaga posisi ground jika state akhir memiliki tinggi berbeda.
-        if (isOnGround()) {
-            y = groundY - (getHeight() - 1);
-        }
+        // Pastikan posisi sesuai tinggi karakter saat mendarat
+        y = groundY - (getHeight() - 1);
     }
 }
 
 void Dino::updateAnimationFrame() {
     int frameCount = 1;
-    switch (state) {
-        case DinoState::RUNNING:
-            frameCount = 2;
-            break;
-        case DinoState::DUCKING:
-            frameCount = 2;
-            break;
-        case DinoState::IDLE:
-        case DinoState::JUMPING:
-        default:
-            frameCount = 1;
-            break;
+
+    if (state == DinoState::RUNNING) {
+        frameCount = 2;
+    } else if (state == DinoState::DUCKING) {
+        frameCount = 2;
+    } else {
+        frameCount = 1;
     }
 
     if (frameCount <= 1) {
@@ -214,35 +239,37 @@ void Dino::updateAnimationFrame() {
         return;
     }
 
-    ++animTick;
+    animTick = animTick + 1;
     if (animTick >= ANIM_TICKS_PER_FRAME) {
         animTick = 0;
-        frameIndex = (frameIndex + 1) % frameCount;
+        frameIndex = frameIndex + 1;
+        if (frameIndex >= frameCount) {
+            frameIndex = 0;
+        }
     }
 }
 
+// Fungsi ini masih dipakai oleh deklarasi class (tidak masalah walau sederhana)
 const char** Dino::getFramesForState(DinoState s, int& outFrameCount, int& outHeight, int& outWidth) const {
-    switch (s) {
-        case DinoState::RUNNING:
-            outFrameCount = 2;
-            outHeight = STAND_HEIGHT;
-            outWidth = STAND_WIDTH;
-            return RUN_FRAME_1;
-        case DinoState::DUCKING:
-            outFrameCount = 2;
-            outHeight = DUCK_HEIGHT;
-            outWidth = DUCK_WIDTH;
-            return DUCK_FRAME_1;
-        case DinoState::JUMPING:
-            outFrameCount = 1;
-            outHeight = STAND_HEIGHT;
-            outWidth = STAND_WIDTH;
-            return JUMP_FRAME;
-        case DinoState::IDLE:
-        default:
-            outFrameCount = 1;
-            outHeight = STAND_HEIGHT;
-            outWidth = STAND_WIDTH;
-            return IDLE_FRAME;
+    if (s == DinoState::RUNNING) {
+        outFrameCount = 2;
+        outHeight = STAND_HEIGHT;
+        outWidth = STAND_WIDTH;
+        return RUN_FRAME_1;
+    } else if (s == DinoState::DUCKING) {
+        outFrameCount = 2;
+        outHeight = DUCK_HEIGHT;
+        outWidth = DUCK_WIDTH;
+        return DUCK_FRAME_1;
+    } else if (s == DinoState::JUMPING) {
+        outFrameCount = 1;
+        outHeight = STAND_HEIGHT;
+        outWidth = STAND_WIDTH;
+        return JUMP_FRAME;
+    } else {
+        outFrameCount = 1;
+        outHeight = STAND_HEIGHT;
+        outWidth = STAND_WIDTH;
+        return IDLE_FRAME;
     }
 }
