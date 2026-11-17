@@ -40,18 +40,23 @@ static const char* JUMP_FRAME[] = {
     "   \\   /      "
 };
 
-// Menunduk: badan lebih rendah tapi kepala/moncong dan kaki tetap terlihat.
-static const char* DUCK_FRAME[] = {
-    "              ",
-    "  __          ",
-    " / _)_/\\/\\/\\  ",
-    " \\_____/  \\   "
+// Menunduk: kepala turun dekat ground, badan lebih horizontal, ekor dan kaki tetap terlihat.
+static const char* DUCK_FRAME_1[] = {
+    "   __         ",
+    "  / _)__/\\__  ",
+    "  \\_/  \\_/    "
+};
+
+static const char* DUCK_FRAME_2[] = {
+    "   __         ",
+    "  / _)__/\\__  ",
+    "   /  \\_/     "
 };
 
 static const int STAND_WIDTH = 14;
 static const int STAND_HEIGHT = 6;
 static const int DUCK_WIDTH = 14;
-static const int DUCK_HEIGHT = 4;
+static const int DUCK_HEIGHT = 3;
 
 static const int JUMP_VELOCITY = -3;
 static const int GRAVITY = 1;
@@ -165,7 +170,11 @@ const char** Dino::getCurrentFrame() const {
             return RUN_FRAME_2;
         }
     } else if (state == DinoState::DUCKING) {
-        return DUCK_FRAME;
+        if (frameIndex == 0) {
+            return DUCK_FRAME_1;
+        } else {
+            return DUCK_FRAME_2;
+        }
     } else if (state == DinoState::JUMPING) {
         return JUMP_FRAME;
     } else {
@@ -228,6 +237,8 @@ void Dino::updateAnimationFrame() {
     int frameCount = 1;
 
     if (state == DinoState::RUNNING) {
+        frameCount = 2;
+    } else if (state == DinoState::DUCKING) {
         frameCount = 2;
     } else {
         frameCount = 1;
