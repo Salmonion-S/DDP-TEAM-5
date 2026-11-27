@@ -3,6 +3,10 @@
 
 using namespace std;
 
+void bersihkanLayar() {
+    cout << "\033[2J\033[H";
+}
+
 string namaPilihan(int pilihan);
 
 void tampilMenu() {
@@ -37,6 +41,7 @@ void tampilAturan() {
     cout << "|  Pemain dengan skor tertinggi        |\n";
     cout << "|  setelah 3 ronde menjadi pemenang.   |\n";
     cout << "|                                      |\n";
+    cout << "|      Tekan ENTER untuk kembali.      |\n";
     cout << "+--------------------------------------+\n";
 }
 
@@ -55,6 +60,7 @@ void tampilAbout() {
     cout << "|  - Dev 2: Player Module              |\n";
     cout << "|  - Dev 3: Computer & Result Module   |\n";
     cout << "|                                      |\n";
+    cout << "|      Tekan ENTER untuk kembali.      |\n";
     cout << "+--------------------------------------+\n";
 }
 
@@ -89,6 +95,8 @@ void tampilHasil(int pemain, int komputer, int hasil) {
         cout << "|                DRAW!                 |\n";
     }
 
+    cout << "|                                      |\n";
+    cout << "|   Tekan ENTER untuk melanjutkan...   |\n";
     cout << "+--------------------------------------+\n";
 }
 
